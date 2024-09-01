@@ -1,0 +1,63 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.larcode'
+version = '1.0-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+//configurations {
+//	compileOnly {
+//		extendsFrom annotationProcessor
+//	}
+//}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation 'org.jfree:jfreechart:1.5.5'
+    implementation 'net.imagej:ij:1.54j'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
+    testImplementation 'junit:junit:4.13.2'
+}
+
+def JAR_NAME = "MEA_Viewer.jar"
+jar {
+    archiveFileName = JAR_NAME
+    manifest {
+        attributes(
+                'Implementation-Title': 'MultiPlugin',
+                'Implementation-Version': version,
+                'Main-Class': 'com.larcode.ij_mea_viewer.IjMeaViewerApplication'
+        )
+    }
+    from {
+//        sourceSets.main.output
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } // 依存ライブラリを含める
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.register('copyToImageJ', Copy) {
+    from "$buildDir/libs/${JAR_NAME}"
+    into "/Applications/Fiji.app/plugins"
+}
+
+build.finalizedBy(copyToImageJ)
+
